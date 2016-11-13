@@ -119,13 +119,14 @@ int BTNdecodeON = 0;
 int BTNlaststate = 0;
 int BTNcheck = 0;
 int BTNcheck2 = 0;
-int BTNinc = 3; // set default band minus 1  ==> (for 7MHz = 3)
+int BTNinc = 4; // set default band minus 1  ==> (for 7MHz = 3)
 
 void setBandswitch(){
-  if (rx >= 10000000L){
+  if (rx >= 10000000L)
+  {
     digitalWrite(BAND_HI, 1);
   }
-  if (rx < 10000000L){
+  else {
     digitalWrite(BAND_HI, 0);
   }
 }
