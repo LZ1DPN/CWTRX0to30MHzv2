@@ -63,7 +63,7 @@ unsigned long cwTimeout = 0;
 
 //#define LSB (2)
 #define TX_RX (5)
-//#define TX_ON (7)
+#define TX_ON (7)
 #define CW_KEY (4)
 #define BAND_HI (6)
 #define FBUTTON (A3)
@@ -113,6 +113,8 @@ const int rows = 2;  /// have to be 2 or 4
 int lcdindex = 0;
 int line1[colums];
 int line2[colums];
+
+//int audioInPin = A1;   // both with one GND pin external from case jumper for further use (TRANSMIT/RECEIVE for POWER AMPLIFIER or something ...
 int BTNdecodeON = 0;
 int BTNlaststate = 0;
 int BTNcheck = 0;
@@ -125,6 +127,33 @@ void setBandswitch(){
   }
   if (rx < 10000000L){
     digitalWrite(BAND_HI, 0);
+  }
+}
+
+void checkTX(){
+
+  //we don't check for ptt when transmitting cw
+  if (cwTimeout > 0)
+    return;
+
+  if (digitalRead(TX_ON) == 0 && inTx == 0){
+    //put the  TX_RX line to transmit
+      pinMode(TX_RX, OUTPUT);
+      digitalWrite(TX_RX, 0);
+      //give the relays a few ms to settle the T/R relays
+      delay(50);
+//    refreshDisplay++;
+    inTx = 1;
+  }
+
+  if (digitalRead(TX_ON) == 1 && inTx == 1){
+     //put the  TX_RX line to transmit
+      pinMode(TX_RX, OUTPUT);
+      digitalWrite(TX_RX, 1);
+      //give the relays a few ms to settle the T/R relays
+      delay(50);
+//    refreshDisplay++;
+    inTx = 0;
   }
 }
 
@@ -184,9 +213,9 @@ digitalWrite(TX_RX, LOW);
   
 digitalWrite(FBUTTON, 1);
   
-//pinMode(TX_ON, INPUT);
-//  digitalWrite(TX_ON, HIGH);
-//  digitalWrite(TX_ON, LOW);
+pinMode(TX_ON, INPUT);
+  digitalWrite(TX_ON, HIGH);
+  digitalWrite(TX_ON, LOW);
   
 pinMode(CW_KEY, OUTPUT);
   digitalWrite(CW_KEY, 0);
@@ -257,7 +286,7 @@ pinMode(CW_KEY, OUTPUT);
 
 void loop() {
 	checkCW();
-//	checkTX();
+	checkTX();
 	checkBTNdecode();
 	setBandswitch();
 	
@@ -345,12 +374,6 @@ ISR(PCINT2_vect) {
 
 // frequency calc from datasheet page 8 = <sys clock> * <frequency tuning word>/2^32
 void sendFrequency(double frequency) {  
-	if (inTx == 1){
-		rxif = 0;
-		}
-	if (inTx == 0){
-		rxif = 6000000;
-		}
   int32_t freq = (frequency + rxif) * 4294967296./180000000;  // note 180 MHz clock on 9851. also note slight adjustment of this can be made to correct for frequency error of onboard crystal
   for (int b=0; b<4; b++, freq>>=8) {
     tfr_byte(freq & 0xFF);
