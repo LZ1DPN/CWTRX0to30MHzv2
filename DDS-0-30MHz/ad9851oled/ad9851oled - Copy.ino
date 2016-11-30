@@ -6,7 +6,6 @@ Revision 4.0 - May 31, 2016  - deintegrate cw decoder and add button for band ch
 Revision 5.0 - July 20, 2016  - change LCD with OLED display + IF --> ready to control transceiver RFT SEG-100 (by LZ1DPN)
 Revision 6.0 - August 16, 2016  - serial control buttons from computer with USB serial (by LZ1DPN) (1 up freq, 2 down freq, 3 step increment change, 4 print state)
 									for no_display work with DDS generator
-Revision 7.0 - November 30,2016  - added some things from Ashhar Farhan's Minima TRX sketch to control transceiver, keyer, relays and other ...									
 */
 
 #include <SPI.h>
@@ -51,33 +50,31 @@ static const unsigned char PROGMEM logo16_glcd_bmp[] =
 #include <avr/io.h>
 //Setup some items
 #define CW_TIMEOUT (600l) // in milliseconds, this is the parameter that determines how long the tx will hold between cw key downs
-unsigned long cwTimeout = 0;     //keyer var - dead operator control
+unsigned long cwTimeout = 0;
 
-#define TX_RX (5)   //mute + (+12V) relay
+#define TX_RX (5)
 #define TX_ON (7)
-#define CW_KEY (4)   // KEY output pin - in Q7 transistor colector
-#define BAND_HI (6)  // relay for RF output LPF  - (0) < 10 MHz , (1) >10 MHz  
-#define FBUTTON (A3)  // tuning step freq CHANGE
-#define ANALOG_KEYER (A1)  // KEYER input - analog straight key
-char inTx = 0;     // trx in transmit mode temp var
-char keyDown = 0;   // keyer down temp vat
+#define CW_KEY (4)
+#define BAND_HI (6)
+#define FBUTTON (A3)
+#define ANALOG_KEYER (A1)
+char inTx = 0;
+char keyDown = 0;
 
-//AD9851 control
 #define W_CLK 8   // Pin 8 - connect to AD9851 module word load clock pin (CLK)
 #define FQ_UD 9   // Pin 9 - connect to freq update pin (FQ)
 #define DATA 10   // Pin 10 - connect to serial data load pin (DATA)
 #define RESET 11  // Pin 11 - connect to reset pin (RST) 
-
 #define BTNDEC (A2)  // BAND CHANGE BUTTON
 #define pulseHigh(pin) {digitalWrite(pin, HIGH); digitalWrite(pin, LOW); }
 Rotary r = Rotary(2,3); // sets the pins the rotary encoder uses.  Must be interrupt pins.
 //LiquidCrystal lcd(12, 13, 7, 6, 5, 4); // I used an odd pin combination because I need pin 2 and 3 for the interrupts.
   
 int_fast32_t rx=7000000; // Starting frequency of VFO
-int_fast32_t rx2=1; // temp variable to hold the updated frequency
-int_fast32_t rxif=6000000; // IF freq, will be summ with vfo freq
+int_fast32_t rx2=1; // variable to hold the updated frequency
+int_fast32_t rxif=6000000; // IF freq, they be summ with vfo freq
 
-int_fast32_t increment = 100; // starting VFO update increment in HZ. tuning step
+int_fast32_t increment = 100; // starting VFO update increment in HZ.
 int buttonstate = 0;
 String hertz = "100 Hz";
 int  hertzPosition = 0;
@@ -94,7 +91,6 @@ int lcdindex = 0;
 int line1[colums];
 int line2[colums];
 
-// temp var
 int BTNdecodeON = 0;
 int BTNlaststate = 0;
 int BTNcheck = 0;
@@ -170,7 +166,6 @@ void checkCW(){
   if (inTx == 1 && cwTimeout < millis()){
     //move the radio back to receive
     digitalWrite(TX_RX, 0);
-	digitalWrite(CW_KEY, 0);
 //    set the TX_RX pin back to input mode
 //    pinMode(TX_RX, INPUT);
 //    digitalWrite(TX_RX, 1); //pull-up!
@@ -186,14 +181,13 @@ void setup() {
 pinMode(TX_RX, OUTPUT);
 digitalWrite(TX_RX, LOW);
   
-pinMode(FBUTTON, INPUT);  //new  
 digitalWrite(FBUTTON, 1);
   
 pinMode(TX_ON, INPUT);
-digitalWrite(TX_ON, LOW);
+  digitalWrite(TX_ON, LOW);
   
 pinMode(CW_KEY, OUTPUT);
-digitalWrite(CW_KEY, LOW);
+  digitalWrite(CW_KEY, LOW);
   
 
 // Initialize the Serial port so that we can use it for debugging
@@ -261,7 +255,7 @@ void loop() {
 	checkCW();
 //	checkTX();
 	checkBTNdecode();
-//	setBandswitch();
+	setBandswitch();
 	
   if (rx != rx2){
 		BTNcheck = 0;   
@@ -289,17 +283,8 @@ void loop() {
         storeMEM();
         }
       }   
-
-// LPF band switch relay	  
 	  
-	if(rx < 10000000){
-		digitalWrite(BAND_HI, 0);
-	    }
-	if(rx > 10000000){
-		digitalWrite(BAND_HI, 1);
-		}
-		  
-///	  
+	  
    /*  check if data has been sent from the computer: */
   if (Serial.available()) {
     /* read the most recent byte */
@@ -352,12 +337,6 @@ ISR(PCINT2_vect) {
 
 // frequency calc from datasheet page 8 = <sys clock> * <frequency tuning word>/2^32
 void sendFrequency(double frequency) {  
-	if(inTx == 1){
-		rxif=0;
-		}
-	if(inTx == 0){
-		rxif=6000000;
-		}
   int32_t freq = (frequency + rxif) * 4294967296./180000000;  // note 180 MHz clock on 9851. also note slight adjustment of this can be made to correct for frequency error of onboard crystal
   for (int b=0; b<4; b++, freq>>=8) {
     tfr_byte(freq & 0xFF);
