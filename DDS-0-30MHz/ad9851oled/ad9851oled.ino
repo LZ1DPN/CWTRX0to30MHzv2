@@ -53,12 +53,12 @@ static const unsigned char PROGMEM logo16_glcd_bmp[] =
 #define CW_TIMEOUT (600l) // in milliseconds, this is the parameter that determines how long the tx will hold between cw key downs
 unsigned long cwTimeout = 0;     //keyer var - dead operator control
 
-#define TX_RX (5)   //mute + (+12V) relay
-#define TX_ON (7)
-#define CW_KEY (4)   // KEY output pin - in Q7 transistor colector
-#define BAND_HI (6)  // relay for RF output LPF  - (0) < 10 MHz , (1) >10 MHz  
-#define FBUTTON (A3)  // tuning step freq CHANGE
-#define ANALOG_KEYER (A1)  // KEYER input - analog straight key
+#define TX_RX (5)   //mute + (+12V) relay - antenna switch relay TX/RX, and +V in TX for PA - RF Amplifier (2 sided 2 possition relay)
+#define TX_ON (7)   // this is for microfone PTT in SSB transceivers (not need for EK1A)
+#define CW_KEY (4)   // KEY output pin - in Q7 transistor colector (+5V when keyer down for RF signal modulation) (in Minima to enable sidetone generator on)
+#define BAND_HI (6)  // relay for RF output LPF  - (0) < 10 MHz , (1) > 10 MHz (see LPF in EK1A schematic)  
+#define FBUTTON (A3)  // tuning step freq CHANGE from 1Hz to 1MHz step for single rotary encoder possition
+#define ANALOG_KEYER (A1)  // KEYER input - for analog straight key
 char inTx = 0;     // trx in transmit mode temp var
 char keyDown = 0;   // keyer down temp vat
 
@@ -68,17 +68,17 @@ char keyDown = 0;   // keyer down temp vat
 #define DATA 10   // Pin 10 - connect to serial data load pin (DATA)
 #define RESET 11  // Pin 11 - connect to reset pin (RST) 
 
-#define BTNDEC (A2)  // BAND CHANGE BUTTON
+#define BTNDEC (A2)  // BAND CHANGE BUTTON from 1,8 to 29 MHz - 11 bands
 #define pulseHigh(pin) {digitalWrite(pin, HIGH); digitalWrite(pin, LOW); }
-Rotary r = Rotary(2,3); // sets the pins the rotary encoder uses.  Must be interrupt pins.
-//LiquidCrystal lcd(12, 13, 7, 6, 5, 4); // I used an odd pin combination because I need pin 2 and 3 for the interrupts.
+Rotary r = Rotary(2,3); // sets the pins for rotary encoder uses.  Must be interrupt pins.
+//LiquidCrystal lcd(12, 13, 7, 6, 5, 4); // I used an odd pin combination because I need pin 2 and 3 for the interrupts. for LCD 16x2 - not used now
   
 int_fast32_t rx=7000000; // Starting frequency of VFO
 int_fast32_t rx2=1; // temp variable to hold the updated frequency
-int_fast32_t rxif=6000000; // IF freq, will be summ with vfo freq
+int_fast32_t rxif=6000000; // IF freq, will be summed with vfo freq - rx variable, my xtal filter now is made from 6 MHz xtals
 
 int_fast32_t increment = 100; // starting VFO update increment in HZ. tuning step
-int buttonstate = 0;
+int buttonstate = 0;   // temp var
 String hertz = "100 Hz";
 int  hertzPosition = 0;
 
@@ -88,18 +88,18 @@ int_fast32_t timepassed = millis(); // int to hold the arduino miilis since star
 int memstatus = 1;  // value to notify if memory is current or old. 0=old, 1=current.
 int ForceFreq = 1;  // Change this to 0 after you upload and run a working sketch to activate the EEPROM memory.  YOU MUST PUT THIS BACK TO 0 AND UPLOAD THE SKETCH AGAIN AFTER STARTING FREQUENCY IS SET!
 int byteRead = 0;
-const int colums = 10; /// have to be 16 or 20
-const int rows = 2;  /// have to be 2 or 4
+const int colums = 10; /// have to be 16 or 20 - in LCD 16x2 - 16, or other , see LCD spec.
+const int rows = 2;  /// have to be 2 or 4 - in LCD 16x2 - 2, or other , see LCD spec.
 int lcdindex = 0;
 int line1[colums];
 int line2[colums];
 
-// temp var
-int BTNdecodeON = 0;
+// buttons temp var
+int BTNdecodeON = 0;   
 int BTNlaststate = 0;
 int BTNcheck = 0;
 int BTNcheck2 = 0;
-int BTNinc = 3; // set default band minus 1  ==> (for 7MHz = 3)
+int BTNinc = 3; // set number of default band minus 1 ---> (for 7MHz = 3)
 
 void setBandswitch(){
 	if (rx < 10000000){
@@ -110,7 +110,7 @@ void setBandswitch(){
 		}
 }
 
-void checkTX(){
+void checkTX(){   // this is stopped now, but if you need to use mike for SSB PTT button, start in main loop function - not fully tested after last changes
   //we don't check for ptt when transmitting cw
   if (cwTimeout > 0)
     return;
@@ -132,6 +132,7 @@ void checkTX(){
       delay(50);
       inTx = 0;
   }
+  //put the  TX_RX line to transmit
   digitalWrite(TX_RX, inTx);
 }
 
@@ -162,7 +163,7 @@ void checkCW(){
   //if we have a keyup
   if (keyDown == 1 && analogRead(ANALOG_KEYER) > 150){
     keyDown = 0;
-    digitalWrite(CW_KEY, 0);
+    digitalWrite(CW_KEY, 0);  // stop the side-tone
     cwTimeout = millis() + CW_TIMEOUT;
   }
 
@@ -179,17 +180,18 @@ void checkCW(){
   }
 }
 
+// start variable setup
 
 void setup() {
 
-//set up the pins
+//set up the pins in/out and logic levels
 pinMode(TX_RX, OUTPUT);
 digitalWrite(TX_RX, LOW);
   
-pinMode(FBUTTON, INPUT);  //new  
+pinMode(FBUTTON, INPUT);  
 digitalWrite(FBUTTON, 1);
   
-pinMode(TX_ON, INPUT);
+pinMode(TX_ON, INPUT);    // need pullup resistor see Minima schematic
 digitalWrite(TX_ON, LOW);
   
 pinMode(CW_KEY, OUTPUT);
@@ -201,7 +203,7 @@ digitalWrite(CW_KEY, LOW);
   Serial.println("Start VFO ver 6.0");
 
   // by default, we'll generate the high voltage from the 3.3v line internally! (neat!)
-  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3C (for the 128x32)
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C address 0x3C (for oled 128x32)
   
   // Show image buffer on the display hardware.
   // Since the buffer is intialized with an Adafruit splashscreen
@@ -218,11 +220,12 @@ digitalWrite(CW_KEY, LOW);
   display.println(rx);
   display.display();
   
-  pinMode(BTNDEC,INPUT);		// temporary use for band change
-  digitalWrite(BTNDEC,HIGH);    //
-  pinMode(A0,INPUT); // Connect to a button that goes to GND on push - rotary encoder FREQ STEP
-  digitalWrite(A0,HIGH);
-//  lcd.begin(16, 2);
+  pinMode(BTNDEC,INPUT);		// band change button
+  digitalWrite(BTNDEC,HIGH);    // level
+  pinMode(A0,INPUT); // Connect to a button that goes to GND on push - rotary encoder push button - for FREQ STEP change
+  digitalWrite(A0,HIGH);  //level
+//  lcd.begin(16, 2);  // for LCD
+// next AD9851 communication settings
   PCICR |= (1 << PCIE2);
   PCMSK2 |= (1 << PCINT18) | (1 << PCINT19);
   sei();
@@ -258,11 +261,12 @@ digitalWrite(CW_KEY, LOW);
 ///// START LOOP - MAIN LOOP
 
 void loop() {
-	checkCW();
-//	checkTX();
-	checkBTNdecode();
-//	setBandswitch();
+	checkCW();   // when pres keyer
+//	checkTX();   // microphone PTT
+	checkBTNdecode();  // BAND change
+//	setBandswitch();   // now not used
 	
+// freq change 
   if (rx != rx2){
 		BTNcheck = 0;   
 		if (BTNcheck == 0) {
@@ -277,7 +281,8 @@ void loop() {
         sendFrequency(rx);
         rx2 = rx;
       }
-      
+
+//  step freq change     
   buttonstate = digitalRead(A0);
   if(buttonstate == LOW) {
         setincrement();        
@@ -299,7 +304,7 @@ void loop() {
 		digitalWrite(BAND_HI, 1);
 		}
 		  
-///	  
+///	  SERIAL COMMUNICATION - remote computer control for DDS - worked but not finishet yet - 1, 2, 3, 4 - worked 
    /*  check if data has been sent from the computer: */
   if (Serial.available()) {
     /* read the most recent byte */
@@ -313,7 +318,7 @@ void loop() {
 	if(byteRead == 51){		// 3 - up increment
 		setincrement();
 		}
-	if(byteRead == 52){		// 4 - print VFO state
+	if(byteRead == 52){		// 4 - print VFO state in serial console
 		Serial.println("VFO_VERSION 6.0");
 		Serial.println(rx);
 		Serial.println(rxif);
@@ -338,6 +343,8 @@ void loop() {
 }	  
 /// END of main loop ///
 /// ===================================================== END ============================================
+
+
 /// START EXTERNAL FUNCTIONS
 
 ISR(PCINT2_vect) {
@@ -346,16 +353,16 @@ ISR(PCINT2_vect) {
     if (result == DIR_CW){rx=rx+increment;}
     else {rx=rx-increment;};       
       if (rx >=70000000){rx=rx2;}; // UPPER VFO LIMIT 
-      if (rx <=100000){rx=rx2;}; // LOWER VFO LIMIT (org<=1)
+      if (rx <=100000){rx=rx2;}; // LOWER VFO LIMIT
   }
 }
 
 // frequency calc from datasheet page 8 = <sys clock> * <frequency tuning word>/2^32
 void sendFrequency(double frequency) {  
-	if(inTx == 1){
+	if(inTx == 1){    // in TX oscilattor = rx (frequency (without IF frequency) for Minima ind Binggo TRX in both case IF freq will be need)
 		rxif=0;
 		}
-	if(inTx == 0){
+	if(inTx == 0){    // in RX oscilattor = rx + 6000000 (IF frequency)
 		rxif=6000000;
 		}
   int32_t freq = (frequency + rxif) * 4294967296./180000000;  // note 180 MHz clock on 9851. also note slight adjustment of this can be made to correct for frequency error of onboard crystal
@@ -365,7 +372,7 @@ void sendFrequency(double frequency) {
   tfr_byte(0x001);   // Final control byte, LSB 1 to enable 6 x xtal multiplier on 9851 set to 0x000 for 9850
   pulseHigh(FQ_UD);  // Done!  Should see output
   
-    Serial.println(frequency);
+    Serial.println(frequency);   // for serial console debuging
 //    Serial.println(frequency + rxif);
 }
 
@@ -377,6 +384,7 @@ void tfr_byte(byte data){
   }
 }
 
+// step increments for rotary encoder button
 void setincrement(){
   if(increment == 1){increment = 10; hertz = "10 Hz"; hertzPosition=0;} 
   else if(increment == 10){increment = 50; hertz = "50 Hz"; hertzPosition=0;}
@@ -402,7 +410,7 @@ void setincrement(){
   delay(250); // Adjust this delay to speed up/slow down the button menu scroll speed.
 };
 
-
+// oled display functions
 void showFreq(){
     millions = int(rx/1000000);
     hundredthousands = ((rx/100000)%10);
@@ -438,7 +446,7 @@ void storeMEM(){
 
 void checkBTNdecode(){
 
-//  BAND CHANGE !!!
+//  BAND CHANGE !!! band plan - change if need
   
 BTNdecodeON = digitalRead(BTNDEC);
 if(BTNdecodeON != BTNlaststate){
@@ -486,12 +494,12 @@ switch (BTNinc) {
       }
     break;
   }
-//  lcd.clear(); 	//CHECK IF NEED uncoment for cw decode
+//  lcd.clear(); 	//for lcd only - CHECK IF NEED uncoment 
 }
 
 if(BTNdecodeON == LOW){
     BTNcheck2 = 0;
-//  lcd.clear();   //CHECK IF NEED uncoment for cw decode
+//  lcd.clear();   //for lcd only - CHECK IF NEED uncoment 
 	}
     BTNlaststate = BTNcheck2;
   }
