@@ -152,6 +152,8 @@ void checkCW(){
     }
     inTx = 1;
     keyDown = 1;
+    rxif = 0;
+    sendFrequency(rx);
     digitalWrite(CW_KEY, 1); //start the side-tone
   }
 
@@ -167,7 +169,7 @@ void checkCW(){
     cwTimeout = millis() + CW_TIMEOUT;
   }
 
-  //if we have keyuup for a longish time while in cw tx mode
+  //if we have keyuup for a longish time while in cw rx mode
   if (inTx == 1 && cwTimeout < millis()){
     //move the radio back to receive
     digitalWrite(TX_RX, 0);
@@ -176,8 +178,11 @@ void checkCW(){
 //    pinMode(TX_RX, INPUT);
 //    digitalWrite(TX_RX, 1); //pull-up!
     inTx = 0;
+    rxif = 6000000;
+    sendFrequency(rx);
     cwTimeout = 0;
   }
+//      Serial.println(rxif);
 }
 
 // start variable setup
@@ -359,12 +364,12 @@ ISR(PCINT2_vect) {
 
 // frequency calc from datasheet page 8 = <sys clock> * <frequency tuning word>/2^32
 void sendFrequency(double frequency) {  
-	if(inTx == 1){    // in TX oscilattor = rx (frequency (without IF frequency) for Minima ind Binggo TRX in both case IF freq will be need)
-		rxif=0;
-		}
-	if(inTx == 0){    // in RX oscilattor = rx + 6000000 (IF frequency)
-		rxif=6000000;
-		}
+//	if(inTx = 0){    // in TX oscilattor = rx (frequency (without IF frequency) for Minima ind Binggo TRX in both case IF freq will be need)
+//		rxif=6000000;
+//		}
+//	if(inTx = 1){    // in RX oscilattor = rx + 6000000 (IF frequency)
+//		rxif=0;
+//		}
   int32_t freq = (frequency + rxif) * 4294967296./180000000;  // note 180 MHz clock on 9851. also note slight adjustment of this can be made to correct for frequency error of onboard crystal
   for (int b=0; b<4; b++, freq>>=8) {
     tfr_byte(freq & 0xFF);
@@ -372,8 +377,8 @@ void sendFrequency(double frequency) {
   tfr_byte(0x001);   // Final control byte, LSB 1 to enable 6 x xtal multiplier on 9851 set to 0x000 for 9850
   pulseHigh(FQ_UD);  // Done!  Should see output
   
-    Serial.println(frequency);   // for serial console debuging
-//    Serial.println(frequency + rxif);
+//    Serial.println(frequency);   // for serial console debuging
+    Serial.println(frequency + rxif);
 }
 
 // transfers a byte, a bit at a time, LSB first to the 9851 via serial DATA line
