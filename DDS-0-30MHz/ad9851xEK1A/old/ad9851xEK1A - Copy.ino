@@ -113,7 +113,7 @@ void checkCW(){
     }
     inTx = 1;
     keyDown = 1;
-    rxif = 100;  // in tx freq +100Hz 
+    rxif = 0;
     sendFrequency(rx);
     digitalWrite(CW_KEY, 1); //start the side-tone
   }
@@ -259,14 +259,14 @@ void loop() {
         }
       }   
 
-// LPF band switch relay	  // stopped now, need to calcualte new LPF for upper bands
+// LPF band switch relay	  
 	  
-//	if(rx < 10000000){
+	if(rx < 10000000){
 		digitalWrite(BAND_HI, 0);
-//	    }
-//	if(rx > 10000000){
-//		digitalWrite(BAND_HI, 1);
-//		}
+	    }
+	if(rx > 10000000){
+		digitalWrite(BAND_HI, 1);
+		}
 		  
 ///	  SERIAL COMMUNICATION - remote computer control for DDS - worked but not finishet yet - 1, 2, 3, 4 - worked 
    /*  check if data has been sent from the computer: */
@@ -409,7 +409,7 @@ void checkBTNdecode(){
 BTNdecodeON = digitalRead(BTNDEC);
 if(BTNdecodeON != BTNlaststate){
     if(BTNdecodeON == HIGH){
-    delay(150);
+    delay(200);
     BTNcheck2 = 1;
     BTNinc = BTNinc + 1;
 switch (BTNinc) {
