@@ -113,7 +113,7 @@ void checkCW(){
     }
     inTx = 1;
     keyDown = 1;
-    rxif = 100;  // in tx freq +100Hz 
+    rxif = 500;  // in tx freq +500Hz 
     sendFrequency(rx);
     digitalWrite(CW_KEY, 1); //start the side-tone
   }

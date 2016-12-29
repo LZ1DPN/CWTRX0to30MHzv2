@@ -1,8 +1,0 @@
-Pullup programming for the buttons
-
-Thanks for the sketch. I'm new to the Arduino and not a C programmer. I would never have made it without your work.
-
-I couldn't get the buttons to work, and found that the internal pullups were not active. I tried adding external resistors and they worked. In the code to initialize the button ports I had to reverse the order of these lines, like this:
-pinMode(_buttonPorts[i], INPUT); // set port as input
-digitalWrite(_buttonPorts[i], HIGH); // enable pull-up resistor
-When I first set the ports as inputs and then enabled the pullups, all was fine. Strange, I sez.
