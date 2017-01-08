@@ -8,6 +8,7 @@ Revision 6.0 - August 16, 2016  - serial control buttons from computer with USB 
 									for no_display work with DDS generator
 Revision 7.0 - November 30, 2016  - added some things from Ashhar Farhan's Minima TRX sketch to control transceiver, keyer, relays and other ... (LZ1DPN mod)								
 Revision 8.0 - December 12, 2016  - EK1A trx end revision. Setup last hardware changes ... (LZ1DPN mod)
+Revision 9.0 - January 07, 2017  - EK1A trx last revision. Remove not worked bands ... trx work well on 3.5, 7, 10, 14 MHz (LZ1DPN mod)
 */
 
 #include <SPI.h>
@@ -78,9 +79,9 @@ int_fast32_t rx=7000000; // Starting frequency of VFO
 int_fast32_t rx2=1; // temp variable to hold the updated frequency
 int_fast32_t rxif=6000000; // IF freq, will be summed with vfo freq - rx variable, my xtal filter now is made from 6 MHz xtals
 
-int_fast32_t increment = 100; // starting VFO update increment in HZ. tuning step
+int_fast32_t increment = 50; // starting VFO update increment in HZ. tuning step
 int buttonstate = 0;   // temp var
-String hertz = "100 Hz";
+String hertz = "50 Hz";
 int  hertzPosition = 0;
 
 byte ones,tens,hundreds,thousands,tenthousands,hundredthousands,millions ;  //Placeholders
@@ -100,7 +101,7 @@ int BTNdecodeON = 0;
 int BTNlaststate = 0;
 int BTNcheck = 0;
 int BTNcheck2 = 0;
-int BTNinc = 3; // set number of default band minus 1 ---> (for 7MHz = 3)
+int BTNinc = 2; // set number of default band minus 1 ---> (for 7MHz = 2)
 
 void checkCW(){
   pinMode(TX_RX, OUTPUT);
@@ -275,12 +276,15 @@ void loop() {
     byteRead = Serial.read();
 	if(byteRead == 49){     // 1 - up freq
 		rx = rx + increment;
+		Serial.println(rx);
 		}
 	if(byteRead == 50){		// 2 - down freq
 		rx = rx - increment;
+		Serial.println(rx);
 		}
 	if(byteRead == 51){		// 3 - up increment
 		setincrement();
+		Serial.println(increment);
 		}
 	if(byteRead == 52){		// 4 - print VFO state in serial console
 		Serial.println("VFO_VERSION 6.0");
@@ -414,40 +418,22 @@ if(BTNdecodeON != BTNlaststate){
     BTNinc = BTNinc + 1;
 switch (BTNinc) {
     case 1:
-      rx=1810000;
-      break;
-    case 2:
       rx=3500000;
       break;
-    case 3:
+    case 2:
       rx=5250000;
       break;
-    case 4:
+    case 3:
       rx=7000000;
       break;
-    case 5:
+    case 4:
       rx=10100000;
       break;
-    case 6:
+    case 5:
       rx=14000000;
       break;
-    case 7:
-      rx=18068000;
-      break;    
-    case 8:
-      rx=21000000;
-      break;    
-    case 9:
-      rx=24890000;
-      break;    
-    case 10:
-      rx=28000000;
-      break;
-    case 11:
-      rx=29100000;
-      break;    	  
     default:
-      if(BTNinc > 11){
+      if(BTNinc > 5){
          BTNinc = 0;
       }
     break;
