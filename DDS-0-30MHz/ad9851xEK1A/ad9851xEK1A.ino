@@ -8,7 +8,7 @@ Revision 6.0 - August 16, 2016  - serial control buttons from computer with USB 
 									for no_display work with DDS generator
 Revision 7.0 - November 30, 2016  - added some things from Ashhar Farhan's Minima TRX sketch to control transceiver, keyer, relays and other ... (LZ1DPN mod)								
 Revision 8.0 - December 12, 2016  - EK1A trx end revision. Setup last hardware changes ... (LZ1DPN mod)
-Revision 9.0 - January 07, 2017  - EK1A trx last revision. Remove not worked bands ... trx work well on 3.5, 7, 10, 14 MHz (LZ1DPN mod)
+Revision 9.0 - January 07, 2017  - EK1A trx last revision. Remove not worked bands ... trx work well on 3.5, 5, 7, 10, 14 MHz (LZ1DPN mod)
 */
 
 #include <SPI.h>
