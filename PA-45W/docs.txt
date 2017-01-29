@@ -1,0 +1,42 @@
+Features:
+Common used in SSB, AM linear power amplifier, the CW, FM, power amplifier, and the most basic signal amplification.
+Easy installation and operation.
+Low noise, high cost performance, very suitable for DIY enthusiasts.
+Our product is sent by parts, which not include heat radiator, please help yourself to assemble.
+The overall gain more than 40db, which is 10000 times, 10W input 1mW output.
+
+Specifications:
+Input Power: 1-5mW
+Output Power: 45W (Max.)
+Input Voltage: DC 13.8V 10A or higher 
+Max. Output Power: 57W (not with cooling fin)
+Output Impedance: 50 ohm, can according to need to adjust between 10-200 ohm
+Input Frequency Range: 3M-30MHz(HF channel)
+Input/Output Interface: Standard SMA interface, external thread hole
+PCB Size: 60 * 100 mm
+Diameter of Located Hole: 3mm
+Color: Green
+Package Size: 13 * 8 * 1.5cm
+Package Weight: 58g / 2.07oz
+
+Note:
+-The following data to test in person, these data sheet is in a large heat sink can withstand 200W above measured, there is not enough cooling capacity, please do not limit, it's not safe.
+-The upgrade board test data,so it can be used for all HF Channel,
+-In 3 to 5 MHz this period, because of the low frequency, small inductance, lead to the gain has a certain loss, the output power is lower than 7 MHz this point.
+3.500MHz  54W
+7.050MHz  56W
+10.000MHz 57W
+14.270MHz 55W
+21.400MHz 41W
+24.000MHz 37W
+28.100MHz 25W
+29.600MHz 20W
+
+Package List: E1585
+1 * SSB Linear Power Amplifier
+
+English User Manual:
+https://www.dropbox.com/s/k6a1zbv7ou9m5kj/E1585-English%20User%20Manual.pdf?dl=0
+
+The Winding Method of Magnetic Coils:
+https://www.dropbox.com/s/2d92imnguqsoo0g/E1585-the%20Winding%20method%20of%20Magnetic%20coils%20V306.pdf?dl=0 
