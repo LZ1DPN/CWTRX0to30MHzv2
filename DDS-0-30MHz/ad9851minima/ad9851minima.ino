@@ -8,6 +8,7 @@ Revision 6.0 - August 16, 2016  - serial control buttons from computer with USB 
 									for no_display work with DDS generator
 Revision 7.0 - November 30, 2016  - added some things from Ashhar Farhan's Minima TRX sketch to control transceiver, keyer, relays and other ...									
 Revision 7.5 - December 12, 2016  - for Minima and Bingo Transceivers (LZ1DPN mod).
+Revision 8.0 - February 15, 2017  - for Minima and Bingo Transceivers - IF = 20MHz(LZ1DPN mod).
 */
 
 #include <SPI.h>
@@ -54,11 +55,11 @@ static const unsigned char PROGMEM logo16_glcd_bmp[] =
 #define CW_TIMEOUT (600l) // in milliseconds, this is the parameter that determines how long the tx will hold between cw key downs
 unsigned long cwTimeout = 0;     //keyer var - dead operator control
 
-#define TX_RX (5)   //mute + (+12V) relay - antenna switch relay TX/RX, and +V in TX for PA - RF Amplifier (2 sided 2 possition relay)
+#define TX_RX (5)   // (2 sided 2 possition relay)
 #define TX_ON (7)   // this is for microfone PTT in SSB transceivers (not need for EK1A)
 #define CW_KEY (4)   // KEY output pin - in Q7 transistor colector (+5V when keyer down for RF signal modulation) (in Minima to enable sidetone generator on)
 #define BAND_HI (6)  // relay for RF output LPF  - (0) < 10 MHz , (1) > 10 MHz (see LPF in EK1A schematic)  
-#define FBUTTON (A3)  // tuning step freq CHANGE from 1Hz to 1MHz step for single rotary encoder possition
+//#define FBUTTON (A3)  // tuning step freq CHANGE from 1Hz to 1MHz step for single rotary encoder possition
 #define ANALOG_KEYER (A1)  // KEYER input - for analog straight key
 char inTx = 0;     // trx in transmit mode temp var
 char keyDown = 0;   // keyer down temp vat
@@ -76,7 +77,7 @@ Rotary r = Rotary(2,3); // sets the pins for rotary encoder uses.  Must be inter
   
 int_fast32_t rx=7000000; // Starting frequency of VFO
 int_fast32_t rx2=1; // temp variable to hold the updated frequency
-int_fast32_t rxif=6000000; // IF freq, will be summed with vfo freq - rx variable, my xtal filter now is made from 6 MHz xtals
+int_fast32_t rxif=20000000; // IF freq, will be summed with vfo freq - rx variable
 
 int_fast32_t increment = 100; // starting VFO update increment in HZ. tuning step
 int buttonstate = 0;   // temp var
@@ -171,8 +172,8 @@ void setup() {
 pinMode(TX_RX, OUTPUT);
 digitalWrite(TX_RX, LOW);
   
-pinMode(FBUTTON, INPUT);  
-digitalWrite(FBUTTON, 1);
+//pinMode(FBUTTON, INPUT);  
+//digitalWrite(FBUTTON, 1);
   
 pinMode(TX_ON, INPUT);    // need pullup resistor see Minima schematic
 digitalWrite(TX_ON, LOW);
@@ -183,7 +184,7 @@ digitalWrite(CW_KEY, LOW);
 
 // Initialize the Serial port so that we can use it for debugging
   Serial.begin(115200);
-  Serial.println("Start VFO ver 7.5");
+  Serial.println("Start VFO ver 8.0 minima 3");
 
   // by default, we'll generate the high voltage from the 3.3v line internally! (neat!)
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C address 0x3C (for oled 128x32)
@@ -294,15 +295,18 @@ void loop() {
     byteRead = Serial.read();
 	if(byteRead == 49){     // 1 - up freq
 		rx = rx + increment;
+    Serial.println(rx);
 		}
 	if(byteRead == 50){		// 2 - down freq
 		rx = rx - increment;
+    Serial.println(rx);
 		}
 	if(byteRead == 51){		// 3 - up increment
 		setincrement();
+    Serial.println(increment);
 		}
 	if(byteRead == 52){		// 4 - print VFO state in serial console
-		Serial.println("VFO_VERSION 6.0");
+		Serial.println("VFO_VERSION 8.0");
 		Serial.println(rx);
 		Serial.println(rxif);
 		Serial.println(increment);
@@ -335,7 +339,7 @@ ISR(PCINT2_vect) {
   if (result) {    
     if (result == DIR_CW){rx=rx+increment;}
     else {rx=rx-increment;};       
-      if (rx >=70000000){rx=rx2;}; // UPPER VFO LIMIT 
+      if (rx >=160000000){rx=rx2;}; // UPPER VFO LIMIT 
       if (rx <=100000){rx=rx2;}; // LOWER VFO LIMIT
   }
 }
