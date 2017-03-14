@@ -9,6 +9,7 @@ Revision 6.0 - August 16, 2016  - serial control buttons from computer with USB 
 Revision 7.0 - November 30, 2016  - added some things from Ashhar Farhan's Minima TRX sketch to control transceiver, keyer, relays and other ... (LZ1DPN mod)								
 Revision 8.0 - December 12, 2016  - EK1A trx end revision. Setup last hardware changes ... (LZ1DPN mod)
 Revision 9.0 - January 07, 2017  - EK1A trx last revision. Remove not worked bands ... trx work well on 3.5, 5, 7, 10, 14 MHz (LZ1DPN mod)
+Revision 10.0 - March 13, 2017 	 - scan function
 */
 
 #include <SPI.h>
@@ -193,10 +194,12 @@ digitalWrite(CW_KEY, LOW);
   pinMode(A0,INPUT); // Connect to a button that goes to GND on push - rotary encoder push button - for FREQ STEP change
   digitalWrite(A0,HIGH);  //level
 //  lcd.begin(16, 2);  // for LCD
-/// next AD9851 communication settings
+//  rotary
   PCICR |= (1 << PCIE2);
   PCMSK2 |= (1 << PCINT18) | (1 << PCINT19);
   sei();
+  
+//  next AD9851 communication settings
   pinMode(FQ_UD, OUTPUT);
   pinMode(W_CLK, OUTPUT);
   pinMode(DATA, OUTPUT);
@@ -288,26 +291,45 @@ void loop() {
 		Serial.println(increment);
 		}
 	if(byteRead == 52){		// 4 - print VFO state in serial console
-		Serial.println("VFO_VERSION 6.0");
+		Serial.println("VFO_VERSION 10.0");
 		Serial.println(rx+rit);
 		Serial.println(rxif);
 		Serial.println(increment);
 		Serial.println(hertz);
 		}
-        if(byteRead == 53){		// 5 - scan freq from 7000 to 7050 and back to 7000
-             for (int i=0; i=500; (i=i+100))
-                rx = rx + i;
+ if(byteRead == 53){		// 5 - scan freq from 7000 to 7050 and back to 7000  
+             var_i=0;           
+             while(var_i<=4000){
+                var_i++;
+                rx = rx + 10;
                 sendFrequency(rx);
-                Serial.println(rx+rit);
+                Serial.println(rx);
                 showFreq();
-                display.clearDisplay();	
-				display.setCursor(0,0);
-				display.println(rx);
-				display.setCursor(0,18);
-				display.println(hertz);
-				display.display();
-                delay(250);
+                if (Serial.available()) {
+					          if(byteRead == 53){
+						            break;						           
+					          }
+				        }
+                //delay(50);
+             }        
+   }
+
+   if(byteRead == 54){   // 6 - scan freq back 40kHz  
+             var_i=0;           
+             while(var_i<=4000){
+                var_i++;
+                rx = rx - 10;
+                sendFrequency(rx);
+                Serial.println(rx);
+                showFreq();
+                if (Serial.available()) {
+                    if(byteRead == 54){
+                        break;                       
+                    }
                 }
+                //delay(50);
+             }        
+   }
 	}
 }	  
 /// END of main loop ///
