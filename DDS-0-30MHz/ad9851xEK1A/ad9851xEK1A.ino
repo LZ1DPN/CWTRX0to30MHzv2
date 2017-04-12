@@ -97,6 +97,7 @@ const int rows = 2;  /// have to be 2 or 4 - in LCD 16x2 - 2, or other , see LCD
 int lcdindex = 0;
 int line1[colums];
 int line2[colums];
+int var_i = 0;
 
 // buttons temp var
 int BTNdecodeON = 0;   
