@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // Include the library code
 #include <SPI.h>
+#include <Wire.h>
 #include <rotary.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
@@ -150,7 +151,7 @@ digitalWrite(CW_KEY, LOW);
 	display.setTextSize(2);
 	display.setTextColor(WHITE);
 	display.setCursor(0,0);
-	display.println(rx-rit);
+	display.println(rx-rit+950);
 	display.setTextSize(1);
 	display.setCursor(0,16);
 	display.print("St:");display.print(hertz);
@@ -265,7 +266,7 @@ void showFreq(){
 	display.setTextSize(2);
 	display.setTextColor(WHITE);
 	display.setCursor(0,0);
-	display.println(rx-rit);
+	display.println(rx-rit+950);
 	display.setTextSize(1);
 	display.setCursor(0,16);
 	display.print("St:");display.print(hertz);
@@ -298,37 +299,37 @@ if(BTNdecodeON != BTNlaststate){
     
     switch (BTNinc) {
           case 1:
-            rx=1810000+rit;
+            rx=1810000+rit-950;
             break;
           case 2:
-            rx=3500000+rit;
+            rx=3500000+rit-950;
             break;
           case 3:
-            rx=5250000+rit;
+            rx=5250000+rit-950;
             break;
           case 4:
-            rx=7000000+rit;
+            rx=7000000+rit-950;
             break;
           case 5:
-            rx=10100000+rit;
+            rx=10100000+rit-950;
             break;
           case 6:
-            rx=14000000+rit;
+            rx=14000000+rit-950;
             break;
           case 7:
-            rx=18068000+rit;
+            rx=18068000+rit-950;
             break;    
           case 8:
-            rx=21000000+rit;
+            rx=21000000+rit-950;
             break;    
           case 9:
-            rx=24890000+rit;
+            rx=24890000+rit-950;
             break;    
           case 10:
-            rx=28000000+rit;
+            rx=28000000+rit-950;
             break;
           case 11:
-            rx=29100000+rit;
+            rx=29100000+rit-950;
             break;    	  
           default:             
             break;
