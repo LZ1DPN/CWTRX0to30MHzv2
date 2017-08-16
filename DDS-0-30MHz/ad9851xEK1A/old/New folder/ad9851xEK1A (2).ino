@@ -50,7 +50,7 @@ char keyDown = 0;   // keyer down temp vat
 #define pulseHigh(pin) {digitalWrite(pin, HIGH); digitalWrite(pin, LOW); }
 Rotary r = Rotary(2,3); // sets the pins for rotary encoder uses.  Must be interrupt pins.
   
-int_fast32_t rit=400; // RIT +600 Hz
+int_fast32_t rit=600; // RIT +600 Hz
 int_fast32_t rx=(7000000 - rit); // Starting frequency of VFO
 int_fast32_t rx2=1; // temp variable to hold the updated frequency
 int_fast32_t rxif=6000000; // IF freq, will be summed with vfo freq - rx variable, my xtal filter now is made from 6 MHz xtals
@@ -84,7 +84,7 @@ void checkCW(){
     }
     inTx = 1;
     keyDown = 1;
-    rxif = rit - rxRIT;  // in tx freq +600Hz and minus +-RIT 
+    rxif = (rit - rxRIT);  // in tx freq +600Hz and minus +-RIT 
     sendFrequency(rx);
     digitalWrite(CW_KEY, 1); //start the side-tone
   }
@@ -151,7 +151,7 @@ digitalWrite(CW_KEY, LOW);
 	display.setTextSize(2);
 	display.setTextColor(WHITE);
 	display.setCursor(0,0);
-	display.println(rx-rit+1150);
+	display.println(rx-rit+950);
 	display.setTextSize(1);
 	display.setCursor(0,16);
 	display.print("St:");display.print(hertz);
@@ -266,7 +266,7 @@ void showFreq(){
 	display.setTextSize(2);
 	display.setTextColor(WHITE);
 	display.setCursor(0,0);
-	display.println(rx-rit+750);
+	display.println(rx-rit+950);
 	display.setTextSize(1);
 	display.setCursor(0,16);
 	display.print("St:");display.print(hertz);
@@ -299,37 +299,37 @@ if(BTNdecodeON != BTNlaststate){
     
     switch (BTNinc) {
           case 1:
-            rx=1810000+rit-750;
+            rx=1810000+rit-950;
             break;
           case 2:
-            rx=3500000+rit-750;
+            rx=3500000+rit-950;
             break;
           case 3:
-            rx=5250000+rit-750;
+            rx=5250000+rit-950;
             break;
           case 4:
-            rx=7000000+rit-750;
+            rx=7000000+rit-950;
             break;
           case 5:
-            rx=10100000+rit-750;
+            rx=10100000+rit-950;
             break;
           case 6:
-            rx=14000000+rit-750;
+            rx=14000000+rit-950;
             break;
           case 7:
-            rx=18068000+rit-750;
+            rx=18068000+rit-950;
             break;    
           case 8:
-            rx=21000000+rit-750;
+            rx=21000000+rit-950;
             break;    
           case 9:
-            rx=24890000+rit-750;
+            rx=24890000+rit-950;
             break;    
           case 10:
-            rx=28000000+rit-750;
+            rx=28000000+rit-950;
             break;
           case 11:
-            rx=29100000+rit-750;
+            rx=29100000+rit-950;
             break;    	  
           default:             
             break;
