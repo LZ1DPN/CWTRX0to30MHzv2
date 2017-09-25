@@ -29,7 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Adafruit_SSD1306 display(OLED_RESET);
 
 //Setup some items
-#define CW_TIMEOUT (100l) // in milliseconds, this is the parameter that determines how long the tx will hold between cw key downs
+#define CW_TIMEOUT (600l) // in milliseconds, this is the parameter that determines how long the tx will hold between cw key downs
 unsigned long cwTimeout = 0;     //keyer var - dead operator control
 
 #define TX_RX (5)   //mute + (+12V) relay - antenna switch relay TX/RX, and +V in TX for PA - RF Amplifier (2 sided 2 possition relay)
@@ -50,11 +50,10 @@ char keyDown = 0;   // keyer down temp vat
 #define pulseHigh(pin) {digitalWrite(pin, HIGH); digitalWrite(pin, LOW); }
 Rotary r = Rotary(2,3); // sets the pins for rotary encoder uses.  Must be interrupt pins.
   
-int_fast32_t xit=1200; // RIT +600 Hz
-int_fast32_t rx=7000000; // Starting frequency of VFO
+int_fast32_t rit=400; // RIT +600 Hz
+int_fast32_t rx=(7000000 - rit); // Starting frequency of VFO
 int_fast32_t rx2=1; // temp variable to hold the updated frequency
-int_fast32_t rxof=800;
-int_fast32_t rxif=(6000000-rxof); // IF freq, will be summed with vfo freq - rx variable, my xtal filter now is made from 6 MHz xtals
+int_fast32_t rxif=6000000; // IF freq, will be summed with vfo freq - rx variable, my xtal filter now is made from 6 MHz xtals
 int_fast32_t rxRIT=0;
 int RITon=0;
 int_fast32_t increment = 50; // starting VFO update increment in HZ. tuning step
@@ -85,7 +84,7 @@ void checkCW(){
     }
     inTx = 1;
     keyDown = 1;
-    rxif = (-rxRIT);  // in tx freq +600Hz and minus +-RIT 
+    rxif = rit - rxRIT;  // in tx freq +600Hz and minus +-RIT 
     sendFrequency(rx);
     digitalWrite(CW_KEY, 1); //start the side-tone
   }
@@ -98,9 +97,9 @@ void checkCW(){
   //if we have a keyup
   if (keyDown == 1 && analogRead(ANALOG_KEYER) > 150){
     keyDown = 0;
-  	inTx = 0;    /// NEW
-	  rxif = (6000000-rxof);  /// NEW
-	  sendFrequency(rx);  /// NEW
+	inTx = 0;    /// NEW
+	rxif = 6000000;  /// NEW
+	sendFrequency(rx);  /// NEW
     digitalWrite(CW_KEY, 0);  // stop the side-tone
     digitalWrite(TX_RX, 0);
     cwTimeout = millis() + CW_TIMEOUT;
@@ -110,9 +109,9 @@ void checkCW(){
   if (inTx == 1 && cwTimeout < millis()){
     //move the radio back to receive
     digitalWrite(TX_RX, 0);
-  	digitalWrite(CW_KEY, 0);
+	digitalWrite(CW_KEY, 0);
     inTx = 0;
-    rxif = (6000000-rxof);
+    rxif = 6000000;
     sendFrequency(rx);
     cwTimeout = 0;
   }
@@ -138,7 +137,7 @@ digitalWrite(CW_KEY, LOW);
   Serial.println("Start VFO ver 11.0");
 
   // by default, we'll generate the high voltage from the 3.3v line internally! (neat!)
-    display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C address 0x3C (for oled 128x32)
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C address 0x3C (for oled 128x32)
   
   // Show image buffer on the display hardware.
   // Since the buffer is intialized with an Adafruit splashscreen
@@ -146,11 +145,13 @@ digitalWrite(CW_KEY, LOW);
   display.display();
 
   // Clear the buffer.
-  display.clearDisplay();	
+  display.clearDisplay();
+  
+	display.clearDisplay();	
 	display.setTextSize(2);
 	display.setTextColor(WHITE);
 	display.setCursor(0,0);
-	display.println(rx);
+	display.println(rx-rit+1150);
 	display.setTextSize(1);
 	display.setCursor(0,16);
 	display.print("St:");display.print(hertz);
@@ -187,7 +188,7 @@ void loop() {
 	
 // freq change 
   if ((rx != rx2) || (RITon == 1)){
-	  showFreq();
+		  showFreq();
       sendFrequency(rx);
       rx2 = rx;
       }
@@ -265,13 +266,14 @@ void showFreq(){
 	display.setTextSize(2);
 	display.setTextColor(WHITE);
 	display.setCursor(0,0);
-	display.println(rx);
+	display.println(rx-rit+750);
 	display.setTextSize(1);
 	display.setCursor(0,16);
 	display.print("St:");display.print(hertz);
 	display.setCursor(64,16);
 	display.print("rit:");display.print(rxRIT);
 	display.display();
+//  delay(250);
 }
 
 //  BAND CHANGE !!! band plan - change if need 
@@ -297,42 +299,43 @@ if(BTNdecodeON != BTNlaststate){
     
     switch (BTNinc) {
           case 1:
-            rx=1810000;
+            rx=1810000+rit-750;
             break;
           case 2:
-            rx=3500000;
+            rx=3500000+rit-750;
             break;
           case 3:
-            rx=5250000;
+            rx=5250000+rit-750;
             break;
           case 4:
-            rx=7000000;
+            rx=7000000+rit-750;
             break;
           case 5:
-            rx=10100000;
+            rx=10100000+rit-750;
             break;
           case 6:
-            rx=14000000;
+            rx=14000000+rit-750;
             break;
           case 7:
-            rx=18068000;
+            rx=18068000+rit-750;
             break;    
           case 8:
-            rx=21000000;
+            rx=21000000+rit-750;
             break;    
           case 9:
-            rx=24890000;
+            rx=24890000+rit-750;
             break;    
           case 10:
-            rx=28000000;
+            rx=28000000+rit-750;
             break;
           case 11:
-            rx=29100000;
+            rx=29100000+rit-750;
             break;    	  
           default:             
             break;
         }
     }
+//delay(250);
 }
 
 //// OK END OF PROGRAM
