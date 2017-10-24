@@ -10,7 +10,7 @@ Revision 7.0 - November 30, 2016  - added some things from Ashhar Farhan's Minim
 Revision 8.0 - December 12, 2016  - EK1A trx end revision. Setup last hardware changes ... (LZ1DPN mod)
 Revision 9.0 - January 07, 2017  - EK1A trx last revision. Remove not worked bands ... trx work well on 3.5, 5, 7, 10, 14 MHz (LZ1DPN mod)
 Revision 10.0 - March 13, 2017 	 - scan function
-Revision 11.0 - October 22, 2017 	 - RIT + other - other
+Revision 11.0 - June 22, 2017 	 - RIT + other - other
 
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
 without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -54,8 +54,7 @@ int_fast32_t xit=1200; // RIT +600 Hz
 int_fast32_t rx=7000000; // Starting frequency of VFO
 int_fast32_t rx2=1; // temp variable to hold the updated frequency
 int_fast32_t rxof=800;
-int_fast32_t freqIF=6000000;
-int_fast32_t rxif=(freqIF-rxof); // IF freq, will be summed with vfo freq - rx variable, my xtal filter now is made from 6 MHz xtals
+int_fast32_t rxif=(6000000-rxof); // IF freq, will be summed with vfo freq - rx variable, my xtal filter now is made from 6 MHz xtals
 int_fast32_t rxRIT=0;
 int RITon=0;
 int_fast32_t increment = 50; // starting VFO update increment in HZ. tuning step
@@ -80,8 +79,10 @@ void checkCW(){
   pinMode(TX_RX, OUTPUT);
   if (keyDown == 0 && analogRead(ANALOG_KEYER) < 50){
     //switch to transmit mode if we are not already in it
-    digitalWrite(TX_RX, 1);
-    delay(5);  //give the relays a few ms to settle the T/R relays
+    if (inTx == 0){
+      //put the TX_RX line to transmit
+      digitalWrite(TX_RX, 1);
+    }
     inTx = 1;
     keyDown = 1;
     rxif = (-rxRIT);  // in tx freq +600Hz and minus +-RIT 
@@ -89,31 +90,29 @@ void checkCW(){
     digitalWrite(CW_KEY, 1); //start the side-tone
   }
 
-//reset the timer as long as the key is down
+  //reset the timer as long as the key is down
   if (keyDown == 1){
      cwTimeout = CW_TIMEOUT + millis();
   }
 
-//if we have a keyup
+  //if we have a keyup
   if (keyDown == 1 && analogRead(ANALOG_KEYER) > 150){
     keyDown = 0;
-    inTx = 0;   
+  	inTx = 0;    /// NEW
+	  rxif = (6000000-rxof);  /// NEW
+	  sendFrequency(rx);  /// NEW
     digitalWrite(CW_KEY, 0);  // stop the side-tone
-    delay(5);  //give the relays a few ms to settle the T/R relays
-    rxif = (freqIF - rxof);  
-    sendFrequency(rx); 
     digitalWrite(TX_RX, 0);
     cwTimeout = millis() + CW_TIMEOUT;
   }
 
-//if we have keyuup for a longish time while in cw rx mode
-  if ((inTx == 1) && (millis() > cwTimeout)){
+  //if we have keyuup for a longish time while in cw rx mode
+  if (inTx == 1 && cwTimeout < millis()){
     //move the radio back to receive
     digitalWrite(TX_RX, 0);
-    digitalWrite(CW_KEY, 0);
+  	digitalWrite(CW_KEY, 0);
     inTx = 0;
-    keyDown = 0;
-    rxif = (freqIF - rxof);
+    rxif = (6000000-rxof);
     sendFrequency(rx);
     cwTimeout = 0;
   }
@@ -278,15 +277,25 @@ void showFreq(){
 //  BAND CHANGE !!! band plan - change if need 
 void checkBTNdecode(){
   
-BTNdecodeON = digitalRead(BTNDEC);    
-    if(BTNdecodeON == LOW){
+BTNdecodeON = digitalRead(BTNDEC);
+if(BTNdecodeON != BTNlaststate){
+    
+    if(BTNdecodeON == HIGH){
+         delay(150);
+         BTNcheck2 = 1;
          BTNinc = BTNinc + 1;
-         
-         if(BTNinc > 7){
+         if(BTNinc > 6){
               BTNinc = 2;
               }
-              
-          switch (BTNinc) {
+    }
+    
+    if(BTNdecodeON == LOW){
+         BTNcheck2 = 0; 
+    }
+    
+    BTNlaststate = BTNcheck2;
+    
+    switch (BTNinc) {
           case 1:
             rx=1810000;
             break;
@@ -319,11 +328,10 @@ BTNdecodeON = digitalRead(BTNDEC);
             break;
           case 11:
             rx=29100000;
-            break;        
+            break;    	  
           default:             
             break;
-        }         
-        delay(200);     
+        }
     }
 }
 
