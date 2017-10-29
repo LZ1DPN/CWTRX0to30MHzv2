@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <rotary.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
-#define OLED_RESET 12
+#define OLED_RESET 5   //12
 Adafruit_SSD1306 display(OLED_RESET);
 
 //Setup some items
@@ -53,7 +53,7 @@ Rotary r = Rotary(2,3); // sets the pins for rotary encoder uses.  Must be inter
 int_fast32_t xit=1200; // RIT +600 Hz
 int_fast32_t rx=7000000; // Starting frequency of VFO
 int_fast32_t rx2=1; // temp variable to hold the updated frequency
-int_fast32_t rxof=800;
+int_fast32_t rxof=700; //800
 int_fast32_t freqIF=6000000;
 int_fast32_t rxif=(freqIF-rxof); // IF freq, will be summed with vfo freq - rx variable, my xtal filter now is made from 6 MHz xtals
 int_fast32_t rxRIT=0;
