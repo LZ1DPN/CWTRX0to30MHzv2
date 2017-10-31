@@ -20,10 +20,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 // Include the library code
-//#include <SPI.h>
-//#include <Wire.h>
+#include <SPI.h>
+#include <Wire.h>
 #include <rotary.h>
-//#include <Adafruit_GFX.h>
+#include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #define OLED_RESET 5   //12
 Adafruit_SSD1306 display(OLED_RESET);
@@ -32,14 +32,13 @@ Adafruit_SSD1306 display(OLED_RESET);
 #define CW_TIMEOUT (100l) // in milliseconds, this is the parameter that determines how long the tx will hold between cw key downs
 unsigned long cwTimeout = 0;     //keyer var - dead operator control
 
-#define TX_RX (5)          // mute + (+12V) relay - antenna switch relay TX/RX, and +V in TX for PA - RF Amplifier (2 sided 2 possition relay)
-#define CW_KEY (4)         // KEY output pin - in Q7 transistor colector (+5V when keyer down for RF signal modulation) (in Minima to enable sidetone generator on)
-//#define BAND_HI (6)      // relay for RF output LPF  - (0) < 10 MHz , (1) > 10 MHz (see LPF in EK1A schematic)  
-#define FBUTTON (A0)       // tuning step freq CHANGE from 1Hz to 1MHz step for single rotary encoder possition
+#define TX_RX (5)   //mute + (+12V) relay - antenna switch relay TX/RX, and +V in TX for PA - RF Amplifier (2 sided 2 possition relay)
+#define CW_KEY (4)   // KEY output pin - in Q7 transistor colector (+5V when keyer down for RF signal modulation) (in Minima to enable sidetone generator on)
+#define BAND_HI (6)  // relay for RF output LPF  - (0) < 10 MHz , (1) > 10 MHz (see LPF in EK1A schematic)  
+#define FBUTTON (A3)  // tuning step freq CHANGE from 1Hz to 1MHz step for single rotary encoder possition
 #define ANALOG_KEYER (A1)  // KEYER input - for analog straight key
-#define BTNDEC (A2)        // BAND CHANGE BUTTON from 1,8 to 29 MHz - 11 bands
 char inTx = 0;     // trx in transmit mode temp var
-char keyDown = 1;   // keyer down temp vat
+char keyDown = 0;   // keyer down temp vat
 
 //AD9851 control
 #define W_CLK 8   // Pin 8 - connect to AD9851 module word load clock pin (CLK)
@@ -47,11 +46,11 @@ char keyDown = 1;   // keyer down temp vat
 #define DATA 10   // Pin 10 - connect to serial data load pin (DATA)
 #define RESET 11  // Pin 11 - connect to reset pin (RST) 
 
-
+#define BTNDEC (A2)  // BAND CHANGE BUTTON from 1,8 to 29 MHz - 11 bands
 #define pulseHigh(pin) {digitalWrite(pin, HIGH); digitalWrite(pin, LOW); }
 Rotary r = Rotary(2,3); // sets the pins for rotary encoder uses.  Must be interrupt pins.
   
-//int_fast32_t xit=1200; // RIT +600 Hz
+int_fast32_t xit=1200; // RIT +600 Hz
 int_fast32_t rx=7000000; // Starting frequency of VFO
 int_fast32_t rx2=1; // temp variable to hold the updated frequency
 int_fast32_t rxof=700; //800
@@ -59,33 +58,33 @@ int_fast32_t freqIF=6000000;
 int_fast32_t rxif=(freqIF-rxof); // IF freq, will be summed with vfo freq - rx variable, my xtal filter now is made from 6 MHz xtals
 int_fast32_t rxRIT=0;
 int RITon=0;
-int_fast32_t increment = 100; // starting VFO update increment in HZ. tuning step
+int_fast32_t increment = 50; // starting VFO update increment in HZ. tuning step
 int buttonstate = 0;   // temp var
-String hertz = "100Hz";
+String hertz = "50 Hz";
 int  hertzPosition = 0;
 
-//byte ones,tens,hundreds,thousands,tenthousands,hundredthousands,millions ;  //Placeholders
+byte ones,tens,hundreds,thousands,tenthousands,hundredthousands,millions ;  //Placeholders
 String freq; // string to hold the frequency
-//int_fast32_t timepassed = millis(); // int to hold the arduino miilis since startup
-//int byteRead = 0;
-//int var_i = 0;
+int_fast32_t timepassed = millis(); // int to hold the arduino miilis since startup
+int byteRead = 0;
+int var_i = 0;
 
 // buttons temp var
 int BTNdecodeON = 0;   
-//int BTNlaststate = 0;
-//int BTNcheck = 0;
-//int BTNcheck2 = 0;
+int BTNlaststate = 0;
+int BTNcheck = 0;
+int BTNcheck2 = 0;
 int BTNinc = 3; // set number of default band minus 1
 
 void checkCW(){
   pinMode(TX_RX, OUTPUT);
   if (keyDown == 0 && analogRead(ANALOG_KEYER) < 50){
     //switch to transmit mode if we are not already in it
+    digitalWrite(TX_RX, 1);
+    delay(5);  //give the relays a few ms to settle the T/R relays
     inTx = 1;
     keyDown = 1;
     rxif = (-rxRIT);  // in tx freq +600Hz and minus +-RIT 
-    digitalWrite(TX_RX, 1);
-    delay(5);  //give the relays a few ms to settle the T/R relays 
     sendFrequency(rx);
     digitalWrite(CW_KEY, 1); //start the side-tone
   }
@@ -110,13 +109,12 @@ void checkCW(){
 //if we have keyuup for a longish time while in cw rx mode
   if ((inTx == 1) && (millis() > cwTimeout)){
     //move the radio back to receive
-    digitalWrite(CW_KEY, 0);
-    rxif = (freqIF - rxof);
-    sendFrequency(rx);
     digitalWrite(TX_RX, 0);
-    delay(5);  //give the relays a few ms to settle the T/R relays
+    digitalWrite(CW_KEY, 0);
     inTx = 0;
     keyDown = 0;
+    rxif = (freqIF - rxof);
+    sendFrequency(rx);
     cwTimeout = 0;
   }
 }
@@ -129,21 +127,19 @@ void setup() {
 pinMode(TX_RX, OUTPUT);
 digitalWrite(TX_RX, LOW);
   
+pinMode(FBUTTON, INPUT);  
+digitalWrite(FBUTTON, 1);
+  
 pinMode(CW_KEY, OUTPUT);
 digitalWrite(CW_KEY, LOW);
-
-pinMode(BTNDEC,INPUT);    // band change button
-digitalWrite(BTNDEC,HIGH);    // level
-
-pinMode(FBUTTON,INPUT); // Connect to a button that goes to GND on push - rotary encoder push button - for FREQ STEP change
-digitalWrite(FBUTTON,HIGH);  //level
+  
 
 // Initialize the Serial port so that we can use it for debugging
   Serial.begin(115200);
-//  Serial.println("Start VFO ver 11.0");
+  Serial.println("Start VFO ver 11.0");
 
   // by default, we'll generate the high voltage from the 3.3v line internally! (neat!)
-  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C address 0x3C (for oled 128x32)
+    display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C address 0x3C (for oled 128x32)
   
   // Show image buffer on the display hardware.
   // Since the buffer is intialized with an Adafruit splashscreen
@@ -163,7 +159,12 @@ digitalWrite(FBUTTON,HIGH);  //level
 	display.print("rit:");display.print(rxRIT);
 	display.display();
   
-   //  rotary
+  pinMode(BTNDEC,INPUT);		// band change button
+  digitalWrite(BTNDEC,HIGH);    // level
+  pinMode(A0,INPUT); // Connect to a button that goes to GND on push - rotary encoder push button - for FREQ STEP change
+  digitalWrite(A0,HIGH);  //level
+
+  //  rotary
   PCICR |= (1 << PCIE2);
   PCMSK2 |= (1 << PCINT18) | (1 << PCINT19);
   sei();
@@ -187,13 +188,13 @@ void loop() {
 	
 // freq change 
   if ((rx != rx2) || (RITon == 1)){
-	    showFreq();
+	  showFreq();
       sendFrequency(rx);
       rx2 = rx;
       }
 
 //  step freq change + RIT ON/OFF  
-  buttonstate = digitalRead(FBUTTON);
+  buttonstate = digitalRead(A0);
   if(buttonstate == LOW) {
         setincrement();        
     };
@@ -248,7 +249,12 @@ void setincrement(){
   else if(increment == 10){increment = 50; hertz = "50Hz"; hertzPosition=0;RITon=0;}
   else if (increment == 50){increment = 100;  hertz = "100Hz"; hertzPosition=0;RITon=0;}
   else if (increment == 100){increment = 500; hertz="500Hz"; hertzPosition=0;RITon=0;}
-  else if (increment == 500){increment = 1000000; hertz="1Mhz"; hertzPosition=0;RITon=0;} 
+  else if (increment == 500){increment = 1000; hertz="1Khz"; hertzPosition=0;RITon=0;}
+  else if (increment == 1000){increment = 2500; hertz="2.5Khz"; hertzPosition=0;RITon=0;}
+  else if (increment == 2500){increment = 5000; hertz="5Khz"; hertzPosition=0;RITon=0;}
+  else if (increment == 5000){increment = 10000; hertz="10Khz"; hertzPosition=0;RITon=0;}
+  else if (increment == 10000){increment = 100000; hertz="100Khz"; hertzPosition=0;RITon=0;}
+  else if (increment == 100000){increment = 1000000; hertz="1Mhz"; hertzPosition=0;RITon=0;} 
   else{increment = 0; hertz = "ritON"; hertzPosition=0; RITon=1;};  
   showFreq();
   delay(250); // Adjust this delay to speed up/slow down the button menu scroll speed.
@@ -288,7 +294,7 @@ BTNdecodeON = digitalRead(BTNDEC);
             rx=3500000;
             break;
           case 3:
-            rx=5351500;
+            rx=5250000;
             break;
           case 4:
             rx=7000000;
@@ -317,7 +323,7 @@ BTNdecodeON = digitalRead(BTNDEC);
           default:             
             break;
         }         
-        delay(150);     
+        delay(200);     
     }
 }
 
