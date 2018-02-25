@@ -64,10 +64,17 @@ int buttonstate = 0;   // temp var
 String hertz = "100Hz";
 int  hertzPosition = 0;
 
+//byte ones,tens,hundreds,thousands,tenthousands,hundredthousands,millions ;  //Placeholders
 String freq; // string to hold the frequency
+//int_fast32_t timepassed = millis(); // int to hold the arduino miilis since startup
+//int byteRead = 0;
+//int var_i = 0;
 
 // buttons temp var
 int BTNdecodeON = 0;   
+//int BTNlaststate = 0;
+//int BTNcheck = 0;
+//int BTNcheck2 = 0;
 int BTNinc = 3; // set number of default band minus 1
 
 void checkCW(){
@@ -133,7 +140,7 @@ digitalWrite(FBUTTON,HIGH);  //level
 
 // Initialize the Serial port so that we can use it for debugging
   Serial.begin(115200);
-  Serial.println("Start VFO ver 11.0");
+//  Serial.println("Start VFO ver 11.0");
 
   // by default, we'll generate the high voltage from the 3.3v line internally! (neat!)
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C address 0x3C (for oled 128x32)
@@ -141,9 +148,10 @@ digitalWrite(FBUTTON,HIGH);  //level
   // Show image buffer on the display hardware.
   // Since the buffer is intialized with an Adafruit splashscreen
   // internally, this will display the splashscreen.
+  display.display();
 
   // Clear the buffer.
-	display.clearDisplay();	
+  display.clearDisplay();	
 	display.setTextSize(2);
 	display.setTextColor(WHITE);
 	display.setCursor(0,0);
@@ -180,15 +188,16 @@ void loop() {
 // freq change 
   if ((rx != rx2) || (RITon == 1)){
 	    showFreq();
-		sendFrequency(rx);
-		rx2 = rx;
-	}
+      sendFrequency(rx);
+      rx2 = rx;
+      }
 
 //  step freq change + RIT ON/OFF  
   buttonstate = digitalRead(FBUTTON);
   if(buttonstate == LOW) {
         setincrement();        
-    }
+    };
+
 }	  
 /// END of main loop ///
 /// ===================================================== END ============================================
@@ -205,12 +214,12 @@ if (result) {
 	}
 	if (RITon==1){
 		if (result == DIR_CW){
-			rxRIT=rxRIT+50;
-		}
+		  rxRIT=rxRIT+50;
+		  }
 		else {
 		  rxRIT=rxRIT-50;
-	 	}
-    } 
+	 	  }
+  } 
 }
 }
 
@@ -242,7 +251,7 @@ void setincrement(){
   else if (increment == 500){increment = 1000000; hertz="1Mhz"; hertzPosition=0;RITon=0;} 
   else{increment = 0; hertz = "ritON"; hertzPosition=0; RITon=1;};  
   showFreq();
-  delay(150); // Adjust this delay to speed up/slow down the button menu scroll speed.
+  delay(250); // Adjust this delay to speed up/slow down the button menu scroll speed.
 }
 
 // oled display functions
